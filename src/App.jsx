@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+  { import { useState, useEffect, useRef, useCallback } from "react";
 
 // ============================================================
 // THEME & GLOBAL STYLES
@@ -2079,7 +2079,6 @@ function PhotoIntake({ onClose, onRecipeParsed, apiKey }) {
           ...parsed,
           id: `r-${Date.now()}`
         });
-        onClose();
       }, 600);
     } catch (err) {
       setStatus("Hmm, couldn't read that recipe. Try clearer photos.");
@@ -3472,8 +3471,11 @@ export default function App() {
           onClose={() => setView("grid")}
           apiKey={apiKey}
           onRecipeParsed={parsed => {
-            setEditingRecipe(parsed);
-            setView("form");
+            setView("grid");
+            setTimeout(() => {
+              setEditingRecipe(parsed);
+              setView("form");
+            }, 50);
           }}
         />
       )}
