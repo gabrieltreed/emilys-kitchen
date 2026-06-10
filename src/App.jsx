@@ -1,4 +1,4 @@
-  import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 // ============================================================
 // THEME & GLOBAL STYLES
@@ -2047,7 +2047,10 @@ function PhotoIntake({ onClose, onRecipeParsed, apiKey }) {
         })
       });
 
-      const data = await response.json();
+      alert(`Status: ${response.status}`);
+      const rawText = await response.text();
+      alert(`Response: ${rawText.slice(0, 200)}`);
+      const data = JSON.parse(rawText);
       
       // Check for API errors
       if (data.error) {
