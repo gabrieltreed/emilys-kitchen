@@ -2038,7 +2038,7 @@ function PhotoIntake({ onClose, onRecipeParsed, apiKey }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
+          model: "claude-sonnet-4-6",
           max_tokens: 1000,
           messages: [{
             role: "user",
@@ -2047,10 +2047,7 @@ function PhotoIntake({ onClose, onRecipeParsed, apiKey }) {
         })
       });
 
-      alert(`Status: ${response.status}`);
-      const rawText = await response.text();
-      alert(`Response: ${rawText.slice(0, 200)}`);
-      const data = JSON.parse(rawText);
+      const data = await response.json();
       
       // Check for API errors
       if (data.error) {
@@ -2078,14 +2075,13 @@ function PhotoIntake({ onClose, onRecipeParsed, apiKey }) {
 
       setStatus("Got it! Opening editor...");
       setTimeout(() => {
-        alert(JSON.stringify(parsed).slice(0, 300));
         onRecipeParsed({
           ...parsed,
           id: `r-${Date.now()}`
         });
       }, 600);
     } catch (err) {
-      alert(`Error: ${err.message || JSON.stringify(err)}`);
+      //alert(`Error: ${err.message || JSON.stringify(err)}`);
       setStatus(`Error: ${err.message || "Unknown error"}`);
       setLoading(false);
     }
