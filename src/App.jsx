@@ -2075,6 +2075,7 @@ function PhotoIntake({ onClose, onRecipeParsed, apiKey }) {
 
       setStatus("Got it! Opening editor...");
       setTimeout(() => {
+        alert(JSON.stringify(parsed).slice(0, 300));
         onRecipeParsed({
           ...parsed,
           id: `r-${Date.now()}`
