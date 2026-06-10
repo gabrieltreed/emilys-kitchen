@@ -2048,9 +2048,30 @@ function PhotoIntake({ onClose, onRecipeParsed, apiKey }) {
       });
 
       const data = await response.json();
+      
+      // Check for API errors
+      if (data.error) {
+        setStatus(`Error: ${data.error.message || JSON.stringify(data.error)}`);
+        setLoading(false);
+        return;
+      }
+
       const text = data.content?.map(b => b.text || "").join("") || "";
+      if (!text) {
+        setStatus("No response from AI. Please try again.");
+        setLoading(false);
+        return;
+      }
+
       const clean = text.replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(clean);
+      let parsed;
+      try {
+        parsed = JSON.parse(clean);
+      } catch (e) {
+        setStatus(`Couldn't parse recipe. Got: ${clean.slice(0, 100)}`);
+        setLoading(false);
+        return;
+      }
 
       setStatus("Got it! Opening editor...");
       setTimeout(() => {
