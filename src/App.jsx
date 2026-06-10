@@ -1,4 +1,4 @@
-  { import { useState, useEffect, useRef, useCallback } from "react";
+  import { useState, useEffect, useRef, useCallback } from "react";
 
 // ============================================================
 // THEME & GLOBAL STYLES
@@ -3471,9 +3471,21 @@ export default function App() {
           onClose={() => setView("grid")}
           apiKey={apiKey}
           onRecipeParsed={parsed => {
+            // Normalize parsed data to prevent form crashes
+            const safe = {
+              ...parsed,
+              ingredients: Array.isArray(parsed.ingredients) ? parsed.ingredients.map(ing => ({
+                amount: ing.amount || null,
+                amountStr: String(ing.amountStr || ""),
+                unit: String(ing.unit || ""),
+                name: String(ing.name || ""),
+                note: String(ing.note || "")
+              })) : [{ amount: null, amountStr: "", unit: "", name: "", note: "" }],
+              steps: Array.isArray(parsed.steps) ? parsed.steps.map(s => String(s)) : [""]
+            };
             setView("grid");
             setTimeout(() => {
-              setEditingRecipe(parsed);
+              setEditingRecipe(safe);
               setView("form");
             }, 50);
           }}
