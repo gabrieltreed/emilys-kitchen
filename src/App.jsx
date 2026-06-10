@@ -2085,7 +2085,8 @@ function PhotoIntake({ onClose, onRecipeParsed, apiKey }) {
         });
       }, 600);
     } catch (err) {
-      setStatus("Hmm, couldn't read that recipe. Try clearer photos.");
+      alert(`Error: ${err.message || JSON.stringify(err)}`);
+      setStatus(`Error: ${err.message || "Unknown error"}`);
       setLoading(false);
     }
   };
