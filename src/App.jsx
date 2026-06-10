@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
- 
+
 // ============================================================
 // THEME & GLOBAL STYLES
 // ============================================================
@@ -1970,11 +1970,127 @@ function RecipeForm({ initial, onSave, onCancel }) {
 // ============================================================
 // PHOTO INTAKE MODAL
 // ============================================================
+// ============================================================
+// PARSED RECIPE PREVIEW (inline editable card)
+// ============================================================
+function ParsedRecipePreview({ recipe, onSave, onDiscard }) {
+  const [r, setR] = useState(recipe);
+
+  const set = (key, val) => setR(prev => ({ ...prev, [key]: val }));
+  const totalTime = (r.prepTime || 0) + (r.cookTime || 0);
+  const bucket = getTimeBucket(totalTime);
+
+  const updateIngredient = (i, key, val) => {
+    const ings = [...(r.ingredients || [])];
+    ings[i] = { ...ings[i], [key]: val };
+    set("ingredients", ings);
+  };
+  const updateStep = (i, val) => {
+    const steps = [...(r.steps || [])];
+    steps[i] = val;
+    set("steps", steps);
+  };
+  const removeIngredient = i => set("ingredients", (r.ingredients || []).filter((_, idx) => idx !== i));
+  const removeStep = i => set("steps", (r.steps || []).filter((_, idx) => idx !== i));
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal">
+        <div className="modal-header">
+          <div>
+            <div className="modal-title">✨ Looking good?</div>
+            <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.75rem", marginTop: 3 }}>
+              Edit any field below • Save when ready
+            </div>
+          </div>
+          <button className="modal-close" onClick={onDiscard}>✕</button>
+        </div>
+        <div className="modal-body">
+          <div className="form-group">
+            <label className="form-label">Recipe Name</label>
+            <input className="form-input" style={{ fontFamily: "'Pacifico', cursive", fontSize: "1.1rem" }} value={r.name || ""} onChange={e => set("name", e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Description</label>
+            <input className="form-input" value={r.description || ""} onChange={e => set("description", e.target.value)} placeholder="One sentence tagline..." />
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Type</label>
+              <select className="form-select" value={r.type || "Main"} onChange={e => set("type", e.target.value)}>
+                {["Appetizer","Main","Side","Dessert","Soup","Salad","Breakfast","Drink","Snack"].map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Difficulty</label>
+              <select className="form-select" value={r.difficulty || 2} onChange={e => set("difficulty", parseInt(e.target.value))}>
+                <option value={1}>● Easy</option>
+                <option value={2}>●● Medium</option>
+                <option value={3}>●●● Hard</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="form-row-3">
+            <div className="form-group">
+              <label className="form-label">Prep (min)</label>
+              <input className="form-input" type="number" value={r.prepTime || 0} onChange={e => set("prepTime", parseInt(e.target.value) || 0)} min={0} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Cook (min)</label>
+              <input className="form-input" type="number" value={r.cookTime || 0} onChange={e => set("cookTime", parseInt(e.target.value) || 0)} min={0} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Servings</label>
+              <input className="form-input" type="number" value={r.servings || 4} onChange={e => set("servings", parseInt(e.target.value) || 4)} min={1} />
+            </div>
+          </div>
+
+          <div className="section-title">Ingredients</div>
+          {(r.ingredients || []).map((ing, i) => (
+            <div key={i} style={{ marginBottom: 10 }}>
+              <div className="ingredient-row">
+                <input className="form-input" placeholder="Amount" value={ing.amountStr || ""} onChange={e => updateIngredient(i, "amountStr", e.target.value)} />
+                <input className="form-input" placeholder="Unit" value={ing.unit || ""} onChange={e => updateIngredient(i, "unit", e.target.value)} />
+                <button className="remove-btn" onClick={() => removeIngredient(i)}>✕</button>
+              </div>
+              <div className="ingredient-row-name">
+                <input className="form-input" placeholder="Ingredient name" value={ing.name || ""} onChange={e => updateIngredient(i, "name", e.target.value)} />
+              </div>
+            </div>
+          ))}
+          <button className="add-ingredient-btn" onClick={() => set("ingredients", [...(r.ingredients || []), { amount: null, amountStr: "", unit: "", name: "", note: "" }])}>+ Add Ingredient</button>
+
+          <div className="section-title">Instructions</div>
+          {(r.steps || []).map((step, i) => (
+            <div key={i} className="step-row">
+              <span className="step-num-label">{i + 1}.</span>
+              <textarea className="form-textarea" style={{ minHeight: 60 }} value={step} onChange={e => updateStep(i, e.target.value)} />
+              {(r.steps || []).length > 1 && <button className="remove-btn" style={{ marginTop: 8 }} onClick={() => removeStep(i)}>✕</button>}
+            </div>
+          ))}
+          <button className="add-ingredient-btn" onClick={() => set("steps", [...(r.steps || []), ""])}>+ Add Step</button>
+
+          <div className="atomic-divider">✦ ✦ ✦</div>
+          <div className="btn-row">
+            <button className="btn-primary" onClick={() => onSave({ ...r, prepTime: parseInt(r.prepTime) || 0, cookTime: parseInt(r.cookTime) || 0, servings: parseInt(r.servings) || 4, difficulty: parseInt(r.difficulty) || 2, ingredients: (r.ingredients || []).filter(i => i.name.trim()), steps: (r.steps || []).filter(s => s.trim()) })}>💾 Save Recipe</button>
+            <button className="btn-danger" onClick={onDiscard}>Discard</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// PHOTO INTAKE (multi-select)
+// ============================================================
 function PhotoIntake({ onClose, onRecipeParsed, apiKey }) {
-  const [images, setImages] = useState([]); // [{ url, data, mediaType }]
+  const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
-  const [dragging, setDragging] = useState(false);
+  const [parsedRecipe, setParsedRecipe] = useState(null);
   const fileRef = useRef();
 
   const readFile = file => new Promise((resolve, reject) => {
@@ -1982,27 +2098,15 @@ function PhotoIntake({ onClose, onRecipeParsed, apiKey }) {
     const reader = new FileReader();
     reader.onload = e => {
       const result = e.target.result;
-      resolve({
-        url: result,
-        data: result.split(",")[1],
-        mediaType: file.type || "image/jpeg"
-      });
+      resolve({ url: result, data: result.split(",")[1], mediaType: file.type || "image/jpeg" });
     };
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
 
-  const handleFile = async file => {
-    try {
-      const img = await readFile(file);
-      setImages(prev => [...prev, img]);
-    } catch {}
-  };
-
-  const handleDrop = e => {
-    e.preventDefault();
-    setDragging(false);
-    Array.from(e.dataTransfer.files).forEach(f => handleFile(f));
+  const handleFiles = async files => {
+    const results = await Promise.all(Array.from(files).filter(f => f.type.startsWith("image/")).map(f => readFile(f).catch(() => null)));
+    setImages(prev => [...prev, ...results.filter(Boolean)]);
   };
 
   const removeImage = idx => setImages(prev => prev.filter((_, i) => i !== idx));
@@ -2010,7 +2114,7 @@ function PhotoIntake({ onClose, onRecipeParsed, apiKey }) {
   const analyze = async () => {
     if (!images.length) return;
     setLoading(true);
-    setStatus(images.length > 1 ? `Reading ${images.length} pages...` : "Reading your recipe...");
+    setStatus(images.length > 1 ? `Reading ${images.length} photos...` : "Reading your recipe...");
     try {
       const prompt = `You are a recipe parser. Analyze ${images.length > 1 ? "these images which are all pages of the same recipe" : "this image of a recipe"} and extract all information into a structured JSON object.
       Return ONLY valid JSON with exactly these fields:
@@ -2022,11 +2126,9 @@ function PhotoIntake({ onClose, onRecipeParsed, apiKey }) {
         "cookTime": number in minutes,
         "servings": number,
         "description": "one sentence tagline",
-        "ingredients": [{"amountStr": "½", "unit": "cup", "name": "flour", "note": "sifted", "amount": 0.5}],
+        "ingredients": [{"amountStr": "1/2", "unit": "cup", "name": "flour", "note": "sifted", "amount": 0.5}],
         "steps": ["Step one...", "Step two..."]
       }
-      For ingredients, amountStr should be the fraction/number as written (use fraction characters like ½, ¼, ¾, ⅓, ⅔).
-      For amount field, convert to decimal (½ = 0.5, ¼ = 0.25, etc.) or null if not applicable.
       Return ONLY the JSON object, no markdown, no explanation.`;
 
       const imageBlocks = images.map(img => ({
@@ -2034,58 +2136,55 @@ function PhotoIntake({ onClose, onRecipeParsed, apiKey }) {
         source: { type: "base64", media_type: img.mediaType, data: img.data }
       }));
 
-      const response = await fetch('/api/parse-recipe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/parse-recipe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-6",
           max_tokens: 1000,
-          messages: [{
-            role: "user",
-            content: [...imageBlocks, { type: "text", text: prompt }]
-          }]
+          messages: [{ role: "user", content: [...imageBlocks, { type: "text", text: prompt }] }]
         })
       });
 
       const data = await response.json();
-      
-      // Check for API errors
-      if (data.error) {
-        setStatus(`Error: ${data.error.message || JSON.stringify(data.error)}`);
-        setLoading(false);
-        return;
-      }
+      if (data.error) { setStatus(`Error: ${data.error.message}`); setLoading(false); return; }
 
       const text = data.content?.map(b => b.text || "").join("") || "";
-      if (!text) {
-        setStatus("No response from AI. Please try again.");
-        setLoading(false);
-        return;
-      }
+      if (!text) { setStatus("No response from AI. Please try again."); setLoading(false); return; }
 
       const clean = text.replace(/```json|```/g, "").trim();
       let parsed;
-      try {
-        parsed = JSON.parse(clean);
-      } catch (e) {
-        setStatus(`Couldn't parse recipe. Got: ${clean.slice(0, 100)}`);
-        setLoading(false);
-        return;
-      }
+      try { parsed = JSON.parse(clean); }
+      catch (e) { setStatus("Couldn't parse recipe. Try a clearer photo."); setLoading(false); return; }
 
-      setStatus("Got it! Opening editor...");
-      setTimeout(() => {
-        onRecipeParsed({
-          ...parsed,
-          id: `r-${Date.now()}`
-        });
-      }, 600);
+      const safe = {
+        ...parsed,
+        id: `r-${Date.now()}`,
+        ingredients: Array.isArray(parsed.ingredients) ? parsed.ingredients.map(ing => ({
+          amount: ing.amount || null, amountStr: String(ing.amountStr || ""),
+          unit: String(ing.unit || ""), name: String(ing.name || ""), note: String(ing.note || "")
+        })) : [],
+        steps: Array.isArray(parsed.steps) ? parsed.steps.map(s => String(s)) : []
+      };
+
+      setLoading(false);
+      setParsedRecipe(safe);
+
     } catch (err) {
-      //alert(`Error: ${err.message || JSON.stringify(err)}`);
-      setStatus(`Error: ${err.message || "Unknown error"}`);
+      setStatus(`Error: ${err.message || "Something went wrong"}`);
       setLoading(false);
     }
   };
+
+  if (parsedRecipe) {
+    return (
+      <ParsedRecipePreview
+        recipe={parsedRecipe}
+        onSave={recipe => { onRecipeParsed(recipe); onClose(); }}
+        onDiscard={() => setParsedRecipe(null)}
+      />
+    );
+  }
 
   return (
     <div className="modal-overlay" onClick={e => { if (e.target.classList.contains("modal-overlay")) onClose(); }}>
@@ -2094,7 +2193,7 @@ function PhotoIntake({ onClose, onRecipeParsed, apiKey }) {
           <div>
             <div className="modal-title">📸 Snap a Recipe</div>
             <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.75rem", marginTop: 3 }}>
-              Add one or more photos — screenshots welcome!
+              Choose one or more photos at once
             </div>
           </div>
           <button className="modal-close" onClick={onClose}>✕</button>
@@ -2107,76 +2206,34 @@ function PhotoIntake({ onClose, onRecipeParsed, apiKey }) {
             }
           </div>
 
-          {/* Thumbnail strip */}
           {images.length > 0 && (
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
               {images.map((img, i) => (
                 <div key={i} style={{ position: "relative", flexShrink: 0 }}>
-                  <img
-                    src={img.url}
-                    alt={`Page ${i + 1}`}
-                    style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 8, border: "2px solid var(--turquoise)" }}
-                  />
-                  <button
-                    onClick={() => removeImage(i)}
-                    style={{
-                      position: "absolute", top: -6, right: -6,
-                      width: 20, height: 20, borderRadius: "50%",
-                      background: "var(--coral)", border: "none", color: "white",
-                      fontSize: "0.65rem", cursor: "pointer", display: "flex",
-                      alignItems: "center", justifyContent: "center", fontWeight: 700
-                    }}
-                  >✕</button>
-                  <div style={{ fontSize: "0.6rem", textAlign: "center", color: "var(--gray)", marginTop: 2, fontFamily: "'Nunito', sans-serif", fontWeight: 700 }}>
-                    Page {i + 1}
-                  </div>
+                  <img src={img.url} alt={`Photo ${i + 1}`} style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 8, border: "2px solid var(--turquoise)" }} />
+                  <button onClick={() => removeImage(i)} style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: "50%", background: "var(--coral)", border: "none", color: "white", fontSize: "0.65rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>✕</button>
+                  <div style={{ fontSize: "0.6rem", textAlign: "center", color: "var(--gray)", marginTop: 2, fontFamily: "'Nunito', sans-serif", fontWeight: 700 }}>{i + 1}</div>
                 </div>
               ))}
             </div>
           )}
 
-          {/* Drop zone — always visible so she can keep adding */}
           {!loading && (
-            <div
-              className={`photo-drop-zone ${dragging ? "dragging" : ""}`}
-              style={{ padding: images.length > 0 ? "16px 24px" : "40px 24px" }}
-              onDragOver={e => { e.preventDefault(); setDragging(true); }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={handleDrop}
-              onClick={() => fileRef.current.click()}
-            >
+            <div className="photo-drop-zone" style={{ padding: images.length > 0 ? "16px 24px" : "40px 24px" }} onClick={() => fileRef.current.click()}>
               <div className="photo-drop-icon" style={{ fontSize: images.length > 0 ? "1.8rem" : "3rem" }}>📷</div>
-              <div className="photo-drop-text">
-                {images.length === 0 ? "Tap to choose a photo" : "+ Add another page"}
-              </div>
-              <div className="photo-drop-sub">
-                {images.length === 0 ? "screenshots, photos, scanned pages" : "recipe continues on another page?"}
-              </div>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                style={{ display: "none" }}
-                onChange={e => { handleFile(e.target.files[0]); e.target.value = ""; }}
-              />
+              <div className="photo-drop-text">{images.length === 0 ? "Tap to choose photos" : "+ Add more photos"}</div>
+              <div className="photo-drop-sub">{images.length === 0 ? "Select one or multiple at once" : "recipe continues on another page?"}</div>
+              <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: "none" }} onChange={e => { handleFiles(e.target.files); e.target.value = ""; }} />
             </div>
           )}
 
-          {loading && (
-            <div className="ai-status">
-              <div className="ai-spinner" />
-              {status}
-            </div>
-          )}
+          {loading && <div className="ai-status"><div className="ai-spinner" />{status}</div>}
+          {status && !loading && <div style={{ color: "var(--coral-dark)", fontSize: "0.85rem", marginBottom: 12, fontFamily: "'Nunito', sans-serif", fontWeight: 700 }}>{status}</div>}
 
           {images.length > 0 && !loading && (
             <div className="btn-row" style={{ marginTop: 12 }}>
-              <button className="btn-primary" onClick={analyze}>
-                ✨ Parse {images.length > 1 ? `${images.length} Pages` : "This Recipe"}
-              </button>
-              <button className="btn-secondary" onClick={() => setImages([])}>
-                Clear All
-              </button>
+              <button className="btn-primary" onClick={analyze}>✨ Parse {images.length > 1 ? `${images.length} Photos` : "This Recipe"}</button>
+              <button className="btn-secondary" onClick={() => setImages([])}>Clear All</button>
             </div>
           )}
         </div>
@@ -2184,6 +2241,7 @@ function PhotoIntake({ onClose, onRecipeParsed, apiKey }) {
     </div>
   );
 }
+
 
 // ============================================================
 // SHOPPING LIST MODAL
@@ -3471,24 +3529,8 @@ export default function App() {
         <PhotoIntake
           onClose={() => setView("grid")}
           apiKey={apiKey}
-          onRecipeParsed={parsed => {
-            // Normalize parsed data to prevent form crashes
-            const safe = {
-              ...parsed,
-              ingredients: Array.isArray(parsed.ingredients) ? parsed.ingredients.map(ing => ({
-                amount: ing.amount || null,
-                amountStr: String(ing.amountStr || ""),
-                unit: String(ing.unit || ""),
-                name: String(ing.name || ""),
-                note: String(ing.note || "")
-              })) : [{ amount: null, amountStr: "", unit: "", name: "", note: "" }],
-              steps: Array.isArray(parsed.steps) ? parsed.steps.map(s => String(s)) : [""]
-            };
-            setView("grid");
-            setTimeout(() => {
-              setEditingRecipe(safe);
-              setView("form");
-            }, 50);
+          onRecipeParsed={recipe => {
+            handleSaveRecipe(recipe);
           }}
         />
       )}
