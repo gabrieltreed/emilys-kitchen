@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
- 
+
 // ============================================================
 // THEME & GLOBAL STYLES
 // ============================================================
@@ -3226,7 +3226,7 @@ export default function App() {
   const [apiKey, setApiKeyState] = useState(() => {
     const stored = localStorage.getItem("emily_api_key");
     if (stored) return stored;
-    try { const e = Function('return import.meta.env')(); return (e && e.VITE_ANTHROPIC_API_KEY) || ""; } catch { return ""; }
+    return window.__ANTHROPIC_KEY__ || "";
   });
 
   const setPalette = val => { setPaletteState(val); localStorage.setItem("emily_palette", val); };
