@@ -3224,7 +3224,9 @@ export default function App() {
   const [palette, setPaletteState] = useState(() => localStorage.getItem("emily_palette") || "atomic-teal");
   const [mealPlannerEnabled, setMealPlannerEnabled] = useState(() => localStorage.getItem("emily_meal_planner") === "true");
   const [apiKey, setApiKeyState] = useState(() => {
-    return localStorage.getItem("emily_api_key") || "";
+    const stored = localStorage.getItem("emily_api_key");
+    if (stored) return stored;
+    try { const e = Function('return import.meta.env')(); return (e && e.VITE_ANTHROPIC_API_KEY) || ""; } catch { return ""; }
   });
 
   const setPalette = val => { setPaletteState(val); localStorage.setItem("emily_palette", val); };
