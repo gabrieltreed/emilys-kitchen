@@ -2116,7 +2116,9 @@ function PhotoIntake({ onClose, onRecipeParsed, apiKey }) {
     setLoading(true);
     setStatus(images.length > 1 ? `Reading ${images.length} photos...` : "Reading your recipe...");
     try {
-      const prompt = `You are a recipe parser. Analyze ${images.length > 1 ? "these images which are all pages of the same recipe" : "this image of a recipe"} and extract all information into a structured JSON object.
+      const prompt = `You are a recipe parser. Analyze ${images.length > 1 ? "these images which are all pages of the same recipe" : "this image of a recipe"} and extract the recipe information into a structured JSON object.
+      IMPORTANT: Ignore any hashtags, promotional text, "follow me", "comment RECIPE", website URLs, brand mentions, or social media noise. Focus only on the actual recipe content.
+      If the recipe has range quantities (e.g. "1½-2 lbs" or "8-10 oz"), use the first/lower value.
       Return ONLY valid JSON with exactly these fields:
       {
         "name": "recipe name",
@@ -2129,7 +2131,8 @@ function PhotoIntake({ onClose, onRecipeParsed, apiKey }) {
         "ingredients": [{"amountStr": "1/2", "unit": "cup", "name": "flour", "note": "sifted", "amount": 0.5}],
         "steps": ["Step one...", "Step two..."]
       }
-      Return ONLY the JSON object, no markdown, no explanation.`;
+      For amount field, convert fractions to decimal (½ = 0.5, ¼ = 0.25, etc.) or null if not applicable.
+      Return ONLY the JSON object, no markdown, no explanation, no extra text.`;
 
       const imageBlocks = images.map(img => ({
         type: "image",
@@ -2141,7 +2144,7 @@ function PhotoIntake({ onClose, onRecipeParsed, apiKey }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-6",
-          max_tokens: 1000,
+          max_tokens: 2000,
           messages: [{ role: "user", content: [...imageBlocks, { type: "text", text: prompt }] }]
         })
       });
