@@ -2199,12 +2199,11 @@ function PhotoIntake({ onClose, onRecipeParsed, apiKey }) {
           <button className="modal-close" onClick={onClose}>✕</button>
         </div>
         <div className="modal-body">
-          <div className="api-key-notice">
-            {apiKey
-              ? <><strong>✓ API key configured.</strong> Ready to parse recipes from photos.</>
-              : <><strong>No API key set.</strong> Add your Anthropic API key in <strong>⚙️ Settings → Photo Intake</strong> to use this feature.</>
-            }
-          </div>
+          {!apiKey && (
+            <div className="api-key-notice">
+              <strong>No API key set.</strong> Add your Anthropic API key in <strong>⚙️ Settings → Photo Intake</strong> to use this feature.
+            </div>
+          )}
 
           {images.length > 0 && (
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
@@ -2232,7 +2231,7 @@ function PhotoIntake({ onClose, onRecipeParsed, apiKey }) {
 
           {images.length > 0 && !loading && (
             <div className="btn-row" style={{ marginTop: 12 }}>
-              <button className="btn-primary" onClick={analyze}>✨ Parse {images.length > 1 ? `${images.length} Photos` : "This Recipe"}</button>
+              <button className="btn-primary" onClick={analyze}>✨ Presto Uploado{images.length > 1 ? ` (${images.length} photos)` : ""}</button>
               <button className="btn-secondary" onClick={() => setImages([])}>Clear All</button>
             </div>
           )}
