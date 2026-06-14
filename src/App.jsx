@@ -2510,12 +2510,19 @@ function ShoppingListModal({ recipes, listIds, servingOverrides = {}, onClose, o
     }
   });
 
-  // Group recipe ingredients by section
+  // Normalize ingredient name for combining — lowercase + strip trailing 's' for plurals
+  const normalizeIngName = name => {
+    const lower = name.toLowerCase().trim();
+    // Strip trailing 's' but not for words that naturally end in s (e.g. 'asparagus', 'hummus')
+    const exceptions = ['asparagus', 'hummus', 'couscous', 'molasses', 'oats', 'grits', 'greens', 'anchovies', 'scallions', 'herbs'];
+    if (exceptions.some(e => lower === e)) return lower;
+    return lower.endsWith('s') ? lower.slice(0, -1) : lower;
+  };
   const recipeSections = {};
   recipeIngredients.forEach((ing, i) => {
     const sec = assignSection(ing);
     if (!recipeSections[sec]) recipeSections[sec] = [];
-    const key = `${ing.name.toLowerCase()}-${ing.unit.toLowerCase()}`;
+    const key = `${normalizeIngName(ing.name)}-${ing.unit.toLowerCase()}`;
     const existing = recipeSections[sec].find(x => x.key === key);
     if (existing && ing.amount) {
       existing.totalAmount = (existing.totalAmount || 0) + (ing.amount || 0);
